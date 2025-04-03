@@ -2,6 +2,12 @@
   command = "npm run build"
   publish = "build"
 
+[[headers]]
+  for = "/serviceWorker.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Service-Worker-Allowed = "/"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

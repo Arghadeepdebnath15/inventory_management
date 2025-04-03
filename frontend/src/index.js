@@ -14,14 +14,22 @@ root.render(
 // Register service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/serviceWorker.js')
-      .then(registration => {
-        console.log('ServiceWorker registration successful');
-      })
-      .catch(err => {
-        console.log('ServiceWorker registration failed: ', err);
+    navigator.serviceWorker.register('/serviceWorker.js', {
+      scope: '/'
+    })
+    .then(registration => {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      
+      registration.addEventListener('statechange', () => {
+        console.log('ServiceWorker state changed to: ', registration.active?.state);
       });
+    })
+    .catch(err => {
+      console.error('ServiceWorker registration failed: ', err);
+    });
   });
+} else {
+  console.log('Service workers are not supported');
 }
 
 // If you want to start measuring performance in your app, pass a function
