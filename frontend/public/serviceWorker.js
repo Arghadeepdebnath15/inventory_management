@@ -1,4 +1,4 @@
-const CACHE_NAME = 'inventory-management-v1';
+const CACHE_NAME = 'inventory-management-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -13,6 +13,8 @@ const urlsToCache = [
 
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Install');
+  self.skipWaiting();
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -66,7 +68,10 @@ self.addEventListener('fetch', (event) => {
 
 self.addEventListener('activate', (event) => {
   console.log('[ServiceWorker] Activate');
-  event.waitUntil(
+  
+  // Take control of all clients immediately
+  event.waitUntil(Promise.all([
+    // Clean up old caches
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
@@ -76,8 +81,8 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
-  );
-  // Immediately claim any clients
-  return self.clients.claim();
+    }),
+    // Take control of all clients immediately
+    self.clients.claim()
+  ]));
 }); 
