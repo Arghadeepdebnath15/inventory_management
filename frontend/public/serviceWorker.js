@@ -1,15 +1,21 @@
-const CACHE_NAME = 'inventory-management-v2';
+const CACHE_NAME = 'inventory-management-v3';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/static/js/main.chunk.js',
-  '/static/js/bundle.js',
-  '/static/css/main.chunk.css',
   '/manifest.json',
-  '/favicon.ico',
-  '/logo192.png',
-  '/logo512.png',
+  'https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap'
 ];
+
+// Function to handle failed requests
+const handleFetchError = (error) => {
+  console.error('[ServiceWorker] Fetch failed:', error);
+  return new Response('Offline', {
+    status: 200,
+    headers: new Headers({
+      'Content-Type': 'text/plain',
+    }),
+  });
+};
 
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Install');
@@ -40,29 +46,36 @@ self.addEventListener('fetch', (event) => {
           return response;
         }
 
-        return fetch(event.request)
+        // Clone the request because it can only be used once
+        const fetchRequest = event.request.clone();
+
+        return fetch(fetchRequest)
           .then((response) => {
             // Check if we received a valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
+            if (!response || response.status !== 200) {
               return response;
             }
 
             // Clone the response
             const responseToCache = response.clone();
 
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
+            // Check if the response is from the same origin or Google Fonts
+            if (event.request.url.startsWith(self.location.origin) ||
+                event.request.url.startsWith('https://fonts.googleapis.com')) {
+              caches.open(CACHE_NAME)
+                .then((cache) => {
+                  cache.put(event.request, responseToCache);
+                })
+                .catch((error) => {
+                  console.error('[ServiceWorker] Cache put failed:', error);
+                });
+            }
 
             return response;
           })
-          .catch((error) => {
-            console.error('[ServiceWorker] Fetch failed:', error);
-            // You might want to return a custom offline page here
-            return new Response('Offline');
-          });
+          .catch(handleFetchError);
       })
+      .catch(handleFetchError)
   );
 });
 
