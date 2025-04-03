@@ -20,6 +20,8 @@ import {
   FormControl,
   Avatar,
   CircularProgress,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -28,6 +30,9 @@ import {
   Logout as LogoutIcon,
   Add as AddIcon,
   Person as PersonIcon,
+  TrendingUp as TrendingUpIcon,
+  People as PeopleIcon,
+  Inventory2 as Inventory2Icon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
@@ -63,6 +68,7 @@ const Dashboard = () => {
   const [uniqueCustomers, setUniqueCustomers] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSalesView, setSelectedSalesView] = useState('today');
+  const theme = useTheme();
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -204,7 +210,7 @@ const Dashboard = () => {
   };
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ flexGrow: 1, bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
       {isLoading ? (
         <Box
           display="flex"
@@ -216,36 +222,59 @@ const Dashboard = () => {
         </Box>
       ) : (
         <>
-          <AppBar position="static">
+          <AppBar 
+            position="static" 
+            elevation={0}
+            sx={{
+              background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.dark} 90%)`,
+              boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
+            }}
+          >
             <Toolbar>
               <IconButton
                 size="large"
                 edge="start"
                 color="inherit"
                 aria-label="menu"
-                sx={{ mr: 2 }}
+                sx={{ mr: 2, '&:hover': { bgcolor: alpha(theme.palette.common.white, 0.1) } }}
                 onClick={handleMenu}
               >
                 <MenuIcon />
               </IconButton>
-              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              <Typography 
+                variant="h6" 
+                component="div" 
+                sx={{ 
+                  flexGrow: 1,
+                  fontWeight: 600,
+                  letterSpacing: 0.5
+                }}
+              >
                 Dashboard
               </Typography>
               <IconButton
                 size="large"
                 color="inherit"
                 onClick={handleProfileMenu}
-                sx={{ ml: 2 }}
+                sx={{ 
+                  ml: 2,
+                  '&:hover': { bgcolor: alpha(theme.palette.common.white, 0.1) }
+                }}
               >
                 <Avatar 
                   src={user?.profileImage || user?.photoURL}
                   sx={{ 
                     width: 32, 
                     height: 32, 
-                    bgcolor: 'primary.main',
-                    color: 'white',
+                    bgcolor: 'white',
+                    color: theme.palette.primary.main,
                     fontSize: '1rem',
-                    fontWeight: 'bold'
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    transition: 'transform 0.2s',
+                    '&:hover': {
+                      transform: 'scale(1.05)'
+                    }
                   }}
                 >
                   {!user?.profileImage && !user?.photoURL && user?.name?.charAt(0).toUpperCase()}
@@ -283,16 +312,40 @@ const Dashboard = () => {
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Grid container spacing={3}>
               <Grid item xs={12} md={4}>
-                <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 240 }}>
+                <Paper 
+                  sx={{ 
+                    p: 3, 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    height: 240,
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: theme.shadows[8]
+                    },
+                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.light, 0.05)} 100%)`,
+                  }}
+                >
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6">
-                      Sales Overview
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <TrendingUpIcon color="primary" />
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Sales Overview
+                      </Typography>
+                    </Box>
                     <FormControl size="small" sx={{ minWidth: 120 }}>
                       <Select
                         value={selectedSalesView}
                         onChange={(e) => setSelectedSalesView(e.target.value)}
                         displayEmpty
+                        sx={{
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: alpha(theme.palette.primary.main, 0.3),
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: theme.palette.primary.main,
+                          },
+                        }}
                       >
                         <MenuItem value="today">Today's Sales</MenuItem>
                         <MenuItem value="total">Total Sales</MenuItem>
@@ -300,12 +353,19 @@ const Dashboard = () => {
                       </Select>
                     </FormControl>
                   </Box>
-                  <Typography variant="h4" color="primary">
+                  <Typography 
+                    variant="h4" 
+                    color="primary"
+                    sx={{ 
+                      fontWeight: 700,
+                      mb: 1
+                    }}
+                  >
                     ₹{(selectedSalesView === 'today' ? (todayTotal || 0) :
                       selectedSalesView === 'total' ? (stats.totalSales || 0) :
                       (stats.monthly || 0)).toFixed(2)}
                   </Typography>
-                  <Typography variant="subtitle1" color="text.secondary">
+                  <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2 }}>
                     {selectedSalesView === 'today' ? `${todaySales.length} sales today` :
                      selectedSalesView === 'total' ? 'All time total' :
                      'This month'}
@@ -315,13 +375,20 @@ const Dashboard = () => {
                       <Table size="small">
                         <TableHead>
                           <TableRow>
-                            <TableCell>Time</TableCell>
-                            <TableCell>Amount</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Time</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Amount</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {todaySales.map((sale) => (
-                            <TableRow key={sale._id}>
+                            <TableRow 
+                              key={sale._id}
+                              sx={{
+                                '&:hover': {
+                                  bgcolor: alpha(theme.palette.primary.main, 0.04)
+                                }
+                              }}
+                            >
                               <TableCell>
                                 {new Date(sale.date).toLocaleTimeString()}
                               </TableCell>
@@ -335,11 +402,34 @@ const Dashboard = () => {
                 </Paper>
               </Grid>
               <Grid item xs={12} md={4}>
-                <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 240 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Total Products
-                  </Typography>
-                  <Typography variant="h4" color="primary">
+                <Paper 
+                  sx={{ 
+                    p: 3, 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    height: 240,
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: theme.shadows[8]
+                    },
+                    background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.light, 0.05)} 100%)`,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <Inventory2Icon color="success" />
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      Total Products
+                    </Typography>
+                  </Box>
+                  <Typography 
+                    variant="h4" 
+                    color="success.main"
+                    sx={{ 
+                      fontWeight: 700,
+                      mb: 1
+                    }}
+                  >
                     {products.length}
                   </Typography>
                   <Typography variant="subtitle1" color="text.secondary">
@@ -348,11 +438,34 @@ const Dashboard = () => {
                 </Paper>
               </Grid>
               <Grid item xs={12} md={4}>
-                <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 240 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Total Customers
-                  </Typography>
-                  <Typography variant="h4" color="primary">
+                <Paper 
+                  sx={{ 
+                    p: 3, 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    height: 240,
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: theme.shadows[8]
+                    },
+                    background: `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.light, 0.05)} 100%)`,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <PeopleIcon color="info" />
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      Total Customers
+                    </Typography>
+                  </Box>
+                  <Typography 
+                    variant="h4" 
+                    color="info.main"
+                    sx={{ 
+                      fontWeight: 700,
+                      mb: 1
+                    }}
+                  >
                     {uniqueCustomers}
                   </Typography>
                   <Typography variant="subtitle1" color="text.secondary">
@@ -361,8 +474,31 @@ const Dashboard = () => {
                 </Paper>
               </Grid>
               <Grid item xs={12}>
-                <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 400 }}>
-                  <Typography variant="h6" gutterBottom>
+                <Paper 
+                  sx={{ 
+                    p: 3, 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    height: 400,
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: theme.shadows[8]
+                    },
+                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.light, 0.02)} 100%)`,
+                  }}
+                >
+                  <Typography 
+                    variant="h6" 
+                    gutterBottom
+                    sx={{ 
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    }}
+                  >
+                    <TrendingUpIcon color="primary" />
                     Sales Trend
                   </Typography>
                   <ResponsiveContainer width="100%" height="100%">
@@ -375,10 +511,10 @@ const Dashboard = () => {
                         left: 24,
                       }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.divider, 0.2)} />
                       <XAxis
                         dataKey="date"
-                        stroke="#666"
+                        stroke={theme.palette.text.secondary}
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
@@ -390,7 +526,7 @@ const Dashboard = () => {
                         }}
                       />
                       <YAxis
-                        stroke="#666"
+                        stroke={theme.palette.text.secondary}
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
@@ -400,10 +536,10 @@ const Dashboard = () => {
                       />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                          backgroundColor: theme.palette.background.paper,
+                          border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+                          borderRadius: theme.shape.borderRadius,
+                          boxShadow: theme.shadows[4]
                         }}
                         formatter={(value) => [`₹${value.toLocaleString()}`, 'Sales']}
                         labelFormatter={(label) => {
@@ -427,10 +563,20 @@ const Dashboard = () => {
                         type="monotone"
                         dataKey="amount"
                         name="Daily Sales"
-                        stroke="#2196f3"
+                        stroke={theme.palette.primary.main}
                         strokeWidth={2}
-                        dot={{ r: 4, strokeWidth: 2, stroke: '#2196f3' }}
-                        activeDot={{ r: 6, strokeWidth: 2, stroke: '#2196f3' }}
+                        dot={{ 
+                          r: 4, 
+                          strokeWidth: 2, 
+                          stroke: theme.palette.primary.main,
+                          fill: theme.palette.background.paper
+                        }}
+                        activeDot={{ 
+                          r: 6, 
+                          strokeWidth: 2, 
+                          stroke: theme.palette.primary.main,
+                          fill: theme.palette.background.paper
+                        }}
                         isAnimationActive={false}
                         connectNulls={true}
                       />
