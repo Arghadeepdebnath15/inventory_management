@@ -46,9 +46,7 @@ const Products = () => {
     category: '',
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [hasSetPassword, setHasSetPassword] = useState(() => {
-    return localStorage.getItem('hasSetPassword') === 'true';
-  });
+  const [hasSetPassword, setHasSetPassword] = useState(false);
   const [setPasswordDialogOpen, setSetPasswordDialogOpen] = useState(false);
   const [confirmPasswordDialogOpen, setConfirmPasswordDialogOpen] = useState(false);
   const [password, setPassword] = useState('');
@@ -59,6 +57,16 @@ const Products = () => {
       navigate('/login');
     }
   }, [authLoading, user, navigate]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('hasSetPassword');
+    console.log('Checking hasSetPassword on mount:', stored);
+    if (stored === 'true') {
+      setHasSetPassword(true);
+    } else {
+      resetPasswordState();
+    }
+  }, []);
 
   const fetchProducts = useCallback(async () => {
     if (!user) return;
@@ -118,7 +126,7 @@ const Products = () => {
     console.log('Setting form data:', formDataToSet);
     setSelectedProduct(product);
     setFormData(formDataToSet);
-    setEditOpen(true);
+          setEditOpen(true);
   };
 
   const handleEditClose = () => {
@@ -164,7 +172,7 @@ const Products = () => {
 
       await axios.post('/api/products', productData);
       fetchProducts();
-      handleClose();
+        handleClose();
       toast.success('Product added successfully!');
     } catch (error) {
       console.error('Error adding product:', error);
@@ -192,14 +200,14 @@ const Products = () => {
       setProducts(prevProducts => 
         prevProducts.map(p => p._id === selectedProduct._id ? response.data : p)
       );
-      handleEditClose();
+        handleEditClose();
       toast.success('Product updated successfully!');
     } catch (error) {
       console.error('Error updating product:', error);
       if (error.response?.status === 401) {
         localStorage.removeItem('token');
         navigate('/login');
-    } else {
+      } else {
         toast.error('Failed to update product. Please try again.');
       }
     }
@@ -209,7 +217,7 @@ const Products = () => {
     try {
       await axios.delete(`/api/products/${selectedProduct._id}`);
       setProducts(prevProducts => prevProducts.filter(p => p._id !== selectedProduct._id));
-      handleDeleteClose();
+        handleDeleteClose();
       toast.success('Product deleted successfully!');
     } catch (error) {
       console.error('Error deleting product:', error);
@@ -223,43 +231,58 @@ const Products = () => {
   };
 
   const handleEditClick = (product) => {
-    if (!hasSetPassword) {
-      setSetPasswordDialogOpen(true);
-      setSelectedProduct(product);
-      setActionType('edit');
-      return;
-    }
-    setActionType('edit');
+    console.log('Edit clicked, hasSetPassword:', hasSetPassword);
     setSelectedProduct(product);
-    setConfirmPasswordDialogOpen(true);
+    setActionType('edit');
+    setPassword('');
+    const stored = localStorage.getItem('hasSetPassword');
+    console.log('Current localStorage hasSetPassword:', stored);
+    if (stored !== 'true') {
+      console.log('Opening set password dialog');
+      setSetPasswordDialogOpen(true);
+      setConfirmPasswordDialogOpen(false);
+    } else {
+      console.log('Opening confirm password dialog');
+      setConfirmPasswordDialogOpen(true);
+      setSetPasswordDialogOpen(false);
+    }
   };
 
   const handleDeleteClick = (product) => {
-    if (!hasSetPassword) {
-      setSetPasswordDialogOpen(true);
-      setSelectedProduct(product);
-      setActionType('delete');
-      return;
-    }
-    setActionType('delete');
+    console.log('Delete clicked, hasSetPassword:', hasSetPassword);
     setSelectedProduct(product);
-    setConfirmPasswordDialogOpen(true);
+    setActionType('delete');
+    setPassword('');
+    const stored = localStorage.getItem('hasSetPassword');
+    console.log('Current localStorage hasSetPassword:', stored);
+    if (stored !== 'true') {
+      console.log('Opening set password dialog');
+      setSetPasswordDialogOpen(true);
+      setConfirmPasswordDialogOpen(false);
+    } else {
+      console.log('Opening confirm password dialog');
+      setConfirmPasswordDialogOpen(true);
+      setSetPasswordDialogOpen(false);
+    }
   };
 
   const handleSetPassword = async () => {
     try {
+      if (!password) {
+        toast.error('Please enter a password');
+        return;
+      }
       const response = await axios.post('/api/auth/set-password', { password });
       if (response.status === 200) {
+        console.log('Password set successfully');
         setHasSetPassword(true);
         localStorage.setItem('hasSetPassword', 'true');
+        localStorage.setItem('productPassword', password);
         setSetPasswordDialogOpen(false);
         setPassword('');
-        if (actionType === 'edit' && selectedProduct) {
-          console.log('Password set, opening edit form for:', selectedProduct);
-          handleEditOpen(selectedProduct);
-        } else if (actionType === 'delete' && selectedProduct) {
-          handleDeleteOpen(selectedProduct);
-        }
+        setTimeout(() => {
+          setConfirmPasswordDialogOpen(true);
+        }, 100);
       }
     } catch (error) {
       console.error('Error setting password:', error);
@@ -274,6 +297,10 @@ const Products = () => {
 
   const handlePasswordConfirm = async () => {
     try {
+      if (!password) {
+        toast.error('Please enter a password');
+        return;
+      }
       const response = await axios.post('/api/auth/verify-password', { password });
       if (response.data.valid) {
         setConfirmPasswordDialogOpen(false);
@@ -293,11 +320,24 @@ const Products = () => {
       if (error.response?.status === 401) {
         localStorage.removeItem('token');
         navigate('/login');
+      } else if (error.response?.status === 400) {
+        toast.error('Password not set. Please set a password first.');
+        setSetPasswordDialogOpen(true);
+        setConfirmPasswordDialogOpen(false);
       } else {
         toast.error('Error verifying password. Please try again.');
         setPassword('');
       }
     }
+  };
+
+  const resetPasswordState = () => {
+    localStorage.removeItem('hasSetPassword');
+    localStorage.removeItem('productPassword');
+    setHasSetPassword(false);
+    setPassword('');
+    setSetPasswordDialogOpen(false);
+    setConfirmPasswordDialogOpen(false);
   };
 
   const filteredProducts = products.filter(product =>
@@ -330,14 +370,28 @@ const Products = () => {
         <Typography variant="h4" component="h1">
           Products
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={handleOpen}
-        >
-          Add Product
-        </Button>
+        <Box>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => {
+              setPassword('');
+              setSetPasswordDialogOpen(true);
+              setConfirmPasswordDialogOpen(false);
+            }}
+            sx={{ mr: 2 }}
+          >
+            Set Password
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={handleOpen}
+          >
+            Add Product
+          </Button>
+        </Box>
       </Box>
 
       <TextField
