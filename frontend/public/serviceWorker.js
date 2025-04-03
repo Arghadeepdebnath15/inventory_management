@@ -26,23 +26,39 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Skip caching for API requests
+  if (event.request.url.includes('/api/')) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
         if (response) {
           return response;
         }
+
         return fetch(event.request)
           .then((response) => {
+            // Check if we received a valid response
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
+
+            // Clone the response
             const responseToCache = response.clone();
+
             caches.open(CACHE_NAME)
               .then((cache) => {
                 cache.put(event.request, responseToCache);
               });
+
             return response;
+          })
+          .catch((error) => {
+            console.error('[ServiceWorker] Fetch failed:', error);
+            // You might want to return a custom offline page here
+            return new Response('Offline');
           });
       })
   );
