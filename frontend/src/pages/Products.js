@@ -340,6 +340,11 @@ const Products = () => {
     setConfirmPasswordDialogOpen(false);
   };
 
+  const handleSetPasswordClick = () => {
+    setSetPasswordDialogOpen(true);
+    setConfirmPasswordDialogOpen(false);
+  };
+
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -374,11 +379,7 @@ const Products = () => {
           <Button
             variant="outlined"
             color="primary"
-            onClick={() => {
-              setPassword('');
-              setSetPasswordDialogOpen(true);
-              setConfirmPasswordDialogOpen(false);
-            }}
+            onClick={handleSetPasswordClick}
             sx={{ mr: 2 }}
           >
             Set Password

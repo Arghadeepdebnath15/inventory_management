@@ -2,29 +2,31 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  email: {
+  firebaseUid: {
     type: String,
     required: true,
-    unique: true,
-    trim: true,
-    lowercase: true
-  },
-  password: {
-    type: String,
-    required: function() {
-      return !this.googleId; // Password is required only if not using Google login
-    }
+    unique: true
   },
   name: {
     type: String,
     required: true
   },
-  googleId: {
+  email: {
     type: String,
-    sparse: true // Allows null values but maintains uniqueness
+    required: true,
+    unique: true
   },
-  photoURL: {
-    type: String
+  shopName: {
+    type: String,
+    required: true
+  },
+  profileImage: {
+    type: String,
+    default: ''
+  },
+  password: {
+    type: String,
+    default: null
   },
   createdAt: {
     type: Date,
@@ -32,18 +34,10 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (this.isModified('password') && this.password) {
-    this.password = await bcrypt.hash(this.password, 10);
-  }
-  next();
-});
-
 // Method to compare password
 userSchema.methods.comparePassword = async function(candidatePassword) {
   if (!this.password) return false;
-  return bcrypt.compare(candidatePassword, this.password);
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 module.exports = mongoose.model('User', userSchema); 
