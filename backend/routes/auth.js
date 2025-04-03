@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 // Register a new user
 router.post('/register', async (req, res) => {
@@ -225,6 +227,97 @@ router.put('/profile', auth, async (req, res) => {
   } catch (error) {
     console.error('Update profile error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Google OAuth Strategy
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: `${process.env.FRONTEND_URL}/api/auth/google/callback`
+  },
+  async function(accessToken, refreshToken, profile, done) {
+    try {
+      // Check if user exists
+      let user = await User.findOne({ email: profile.emails[0].value });
+      
+      if (!user) {
+        // Create new user if doesn't exist
+        user = await User.create({
+          email: profile.emails[0].value,
+          name: profile.displayName,
+          googleId: profile.id,
+          photoURL: profile.photos[0].value
+        });
+      }
+      
+      return done(null, user);
+    } catch (error) {
+      return done(error, null);
+    }
+  }
+));
+
+// Google auth route
+router.get('/google',
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    prompt: 'select_account'
+  })
+);
+
+// Google callback route
+router.get('/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function(req, res) {
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: req.user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Send token back to frontend
+    res.send(`
+      <script>
+        window.opener.postMessage({ 
+          token: '${token}', 
+          email: '${req.user.email}',
+          name: '${req.user.name}'
+        }, '${process.env.FRONTEND_URL}');
+      </script>
+    `);
+  }
+);
+
+// Google login route (for frontend)
+router.post('/google-login', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      token,
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        photoURL: user.photoURL
+      }
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

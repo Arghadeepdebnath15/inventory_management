@@ -1,50 +1,72 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { toast } from 'react-toastify';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaGoogle, FaGithub } from 'react-icons/fa';
 import './Login.css';
+import axios from '../utils/axios';
+import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login, user, loading } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
-    if (!loading && user) {
-      navigate('/dashboard');
+    if (user && !loading) {
+      navigate('/products');
     }
   }, [user, loading, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
+    setError('');
 
     try {
       await login(email, password);
       toast.success('Login successful!');
-      navigate('/dashboard');
-    } catch (error) {
-      setError(error.message);
-      toast.error(error.message);
+      navigate('/products');
+    } catch (err) {
+      setError(err.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Show loading state while auth is initializing
-  if (loading) {
-    return (
-      <div className="login-container">
-        <div className="loading-spinner"></div>
-      </div>
-    );
-  }
+  const handleGoogleLogin = async () => {
+    try {
+      // Open Google login popup
+      const width = 500;
+      const height = 600;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+      
+      const popup = window.open(
+        `${process.env.REACT_APP_API_URL}/api/auth/google`,
+        'Google Login',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      // Listen for message from popup
+      window.addEventListener('message', async (event) => {
+        if (event.origin !== process.env.REACT_APP_API_URL) return;
+        
+        if (event.data.token) {
+          localStorage.setItem('token', event.data.token);
+          await login(event.data.email, null, true); // Pass true to indicate Google login
+          popup.close();
+          navigate('/products');
+        }
+      });
+    } catch (error) {
+      console.error('Google login error:', error);
+      toast.error('Google login failed. Please try again.');
+    }
+  };
 
   return (
     <div className="login-container">
@@ -121,7 +143,11 @@ const Login = () => {
           </div>
 
           <div className="social-buttons">
-            <button type="button" className="social-button">
+            <button 
+              type="button" 
+              className="social-button"
+              onClick={handleGoogleLogin}
+            >
               <FaGoogle className="social-icon google-icon" />
               <span>Google</span>
             </button>
