@@ -1,0 +1,7 @@
+/serviceWorker.js
+  Content-Type: application/javascript
+  Service-Worker-Allowed: /
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff 
