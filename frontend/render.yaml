@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: inventory-management-frontend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: serve -s build
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REACT_APP_API_URL
+        value: https://inventory-management-et0z.onrender.com
+      - key: REACT_APP_EVENTS_URL
+        value: https://inventory-management-et0z.onrender.com/events
+      - key: REACT_APP_CLOUDINARY_CLOUD_NAME
+        value: dbhl52bav
+      - key: REACT_APP_CLOUDINARY_UPLOAD_PRESET
+        value: rcwfhnbx 
