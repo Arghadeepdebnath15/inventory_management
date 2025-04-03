@@ -46,7 +46,9 @@ const Products = () => {
     category: '',
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [hasSetPassword, setHasSetPassword] = useState(false);
+  const [hasSetPassword, setHasSetPassword] = useState(() => {
+    return localStorage.getItem('hasSetPassword') === 'true';
+  });
   const [setPasswordDialogOpen, setSetPasswordDialogOpen] = useState(false);
   const [confirmPasswordDialogOpen, setConfirmPasswordDialogOpen] = useState(false);
   const [password, setPassword] = useState('');
@@ -79,7 +81,7 @@ const Products = () => {
 
   useEffect(() => {
     if (user) {
-      fetchProducts();
+    fetchProducts();
     }
   }, [fetchProducts, user]);
 
@@ -188,7 +190,7 @@ const Products = () => {
       if (error.response?.status === 401) {
         localStorage.removeItem('token');
         navigate('/login');
-      } else {
+    } else {
         toast.error('Failed to update product. Please try again.');
       }
     }
@@ -205,10 +207,34 @@ const Products = () => {
       if (error.response?.status === 401) {
         localStorage.removeItem('token');
         navigate('/login');
-      } else {
+    } else {
         toast.error('Failed to delete product. Please try again.');
       }
     }
+  };
+
+  const handleEditClick = (product) => {
+    if (!hasSetPassword) {
+      setSetPasswordDialogOpen(true);
+      setSelectedProduct(product);
+      setActionType('edit');
+      return;
+    }
+    setActionType('edit');
+    setSelectedProduct(product);
+    setConfirmPasswordDialogOpen(true);
+  };
+
+  const handleDeleteClick = (product) => {
+    if (!hasSetPassword) {
+      setSetPasswordDialogOpen(true);
+      setSelectedProduct(product);
+      setActionType('delete');
+      return;
+    }
+    setActionType('delete');
+    setSelectedProduct(product);
+    setConfirmPasswordDialogOpen(true);
   };
 
   const handleSetPassword = async () => {
@@ -219,7 +245,11 @@ const Products = () => {
         localStorage.setItem('hasSetPassword', 'true');
         setSetPasswordDialogOpen(false);
         setPassword('');
-        setConfirmPasswordDialogOpen(true);
+        if (actionType === 'edit' && selectedProduct) {
+          handleEditOpen(selectedProduct);
+        } else if (actionType === 'delete' && selectedProduct) {
+          handleDeleteOpen(selectedProduct);
+        }
       }
     } catch (error) {
       console.error('Error setting password:', error);
@@ -238,10 +268,10 @@ const Products = () => {
       if (response.data.valid) {
         setConfirmPasswordDialogOpen(false);
         setPassword('');
-        if (actionType === 'edit') {
-          setEditOpen(true);
-        } else if (actionType === 'delete') {
-          setDeleteOpen(true);
+        if (actionType === 'edit' && selectedProduct) {
+          handleEditOpen(selectedProduct);
+        } else if (actionType === 'delete' && selectedProduct) {
+          handleDeleteOpen(selectedProduct);
         }
       } else {
         toast.error('Invalid password');
@@ -257,18 +287,6 @@ const Products = () => {
         setPassword('');
       }
     }
-  };
-
-  const handleEditClick = (product) => {
-    setActionType('edit');
-    setSelectedProduct(product);
-    setConfirmPasswordDialogOpen(true);
-  };
-
-  const handleDeleteClick = (product) => {
-    setActionType('delete');
-    setSelectedProduct(product);
-    setConfirmPasswordDialogOpen(true);
   };
 
   const filteredProducts = products.filter(product =>
@@ -349,21 +367,21 @@ const Products = () => {
                 </Typography>
               </CardContent>
               <Box display="flex" justifyContent="flex-end" p={2}>
-                <IconButton
-                  color="primary"
+          <IconButton
+            color="primary"
                   onClick={() => handleEditClick(product)}
                   size="small"
-                >
-                  <EditIcon />
-                </IconButton>
-                <IconButton
-                  color="error"
+          >
+            <EditIcon />
+          </IconButton>
+          <IconButton
+            color="error"
                   onClick={() => handleDeleteClick(product)}
                   size="small"
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </Box>
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Box>
             </Card>
           </Grid>
         ))}
@@ -373,136 +391,136 @@ const Products = () => {
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Add New Product</DialogTitle>
         <DialogContent>
-          <TextField
+                <TextField
             autoFocus
             margin="dense"
             name="name"
             label="Product Name"
             type="text"
-            fullWidth
-            value={formData.name}
+                  fullWidth
+                  value={formData.name}
             onChange={handleInputChange}
             required
-          />
-          <TextField
+                />
+                <TextField
             margin="dense"
             name="description"
             label="Description"
             type="text"
-            fullWidth
-            value={formData.description}
+                  fullWidth
+                  value={formData.description}
             onChange={handleInputChange}
-            multiline
-            rows={3}
-          />
-          <TextField
+                  multiline
+                  rows={3}
+                />
+                <TextField
             margin="dense"
             name="price"
             label="Price"
             type="number"
-            fullWidth
-            value={formData.price}
+                  fullWidth
+                  value={formData.price}
             onChange={handleInputChange}
             required
             InputProps={{
               startAdornment: <InputAdornment position="start">₹</InputAdornment>,
             }}
           />
-          <TextField
+                <TextField
             margin="dense"
             name="quantity"
             label="Quantity"
             type="number"
-            fullWidth
-            value={formData.quantity}
+                  fullWidth
+                  value={formData.quantity}
             onChange={handleInputChange}
             required
-          />
-          <TextField
+                />
+                <TextField
             margin="dense"
             name="category"
             label="Category"
             type="text"
-            fullWidth
-            value={formData.category}
+                  fullWidth
+                  value={formData.category}
             onChange={handleInputChange}
             required
-          />
-        </DialogContent>
+                />
+          </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
           <Button onClick={handleSubmit} color="primary">
             Add
-          </Button>
-        </DialogActions>
+            </Button>
+          </DialogActions>
       </Dialog>
 
       {/* Edit Product Dialog */}
       <Dialog open={editOpen} onClose={handleEditClose}>
         <DialogTitle>Edit Product</DialogTitle>
         <DialogContent>
-          <TextField
+                <TextField
             autoFocus
             margin="dense"
             name="name"
             label="Product Name"
             type="text"
-            fullWidth
-            value={formData.name}
+                  fullWidth
+                  value={formData.name}
             onChange={handleInputChange}
             required
-          />
-          <TextField
+                />
+                <TextField
             margin="dense"
             name="description"
             label="Description"
             type="text"
-            fullWidth
-            value={formData.description}
+                  fullWidth
+                  value={formData.description}
             onChange={handleInputChange}
-            multiline
-            rows={3}
-          />
-          <TextField
+                  multiline
+                  rows={3}
+                />
+                <TextField
             margin="dense"
             name="price"
             label="Price"
             type="number"
-            fullWidth
-            value={formData.price}
+                  fullWidth
+                  value={formData.price}
             onChange={handleInputChange}
             required
             InputProps={{
               startAdornment: <InputAdornment position="start">₹</InputAdornment>,
             }}
           />
-          <TextField
+                <TextField
             margin="dense"
             name="quantity"
             label="Quantity"
             type="number"
-            fullWidth
-            value={formData.quantity}
+                  fullWidth
+                  value={formData.quantity}
             onChange={handleInputChange}
             required
-          />
-          <TextField
+                />
+                <TextField
             margin="dense"
             name="category"
             label="Category"
             type="text"
-            fullWidth
-            value={formData.category}
+                  fullWidth
+                  value={formData.category}
             onChange={handleInputChange}
             required
-          />
-        </DialogContent>
+                />
+          </DialogContent>
         <DialogActions>
           <Button onClick={handleEditClose}>Cancel</Button>
           <Button onClick={handleEditSubmit} color="primary">
             Save
-          </Button>
-        </DialogActions>
+            </Button>
+          </DialogActions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
@@ -570,4 +588,4 @@ const Products = () => {
   );
 };
 
-export default Products;
+export default Products; 
