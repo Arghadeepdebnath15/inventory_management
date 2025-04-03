@@ -101,14 +101,23 @@ const Products = () => {
   };
 
   const handleEditOpen = (product) => {
+    console.log('Opening edit form for product:', product);
+    if (!product) {
+      console.error('No product provided to handleEditOpen');
+      return;
+    }
+    
+    const formDataToSet = {
+      name: product.name || '',
+      description: product.description || '',
+      price: product.price?.toString() || '',
+      quantity: product.quantity?.toString() || '',
+      category: product.category || '',
+    };
+    
+    console.log('Setting form data:', formDataToSet);
     setSelectedProduct(product);
-    setFormData({
-      name: product.name,
-      description: product.description,
-      price: product.price.toString(),
-      quantity: product.quantity.toString(),
-      category: product.category,
-    });
+    setFormData(formDataToSet);
     setEditOpen(true);
   };
 
@@ -246,6 +255,7 @@ const Products = () => {
         setSetPasswordDialogOpen(false);
         setPassword('');
         if (actionType === 'edit' && selectedProduct) {
+          console.log('Password set, opening edit form for:', selectedProduct);
           handleEditOpen(selectedProduct);
         } else if (actionType === 'delete' && selectedProduct) {
           handleDeleteOpen(selectedProduct);
@@ -269,6 +279,7 @@ const Products = () => {
         setConfirmPasswordDialogOpen(false);
         setPassword('');
         if (actionType === 'edit' && selectedProduct) {
+          console.log('Password confirmed, opening edit form for:', selectedProduct);
           handleEditOpen(selectedProduct);
         } else if (actionType === 'delete' && selectedProduct) {
           handleDeleteOpen(selectedProduct);
