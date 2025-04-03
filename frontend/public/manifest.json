@@ -1,13 +1,6 @@
 {
   "short_name": "Snappy Inventory",
   "name": "Snappy Inventory Management System",
-  "icons": [
-    {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    }
-  ],
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#00bfff",
@@ -15,14 +8,5 @@
   "orientation": "portrait",
   "scope": "/",
   "description": "A comprehensive inventory management system",
-  "categories": ["business", "productivity", "utilities"],
-  "screenshots": [
-    {
-      "src": "screenshot1.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "platform": "wide",
-      "label": "Dashboard View"
-    }
-  ]
+  "categories": ["business", "productivity", "utilities"]
 } 
