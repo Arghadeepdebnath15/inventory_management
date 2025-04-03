@@ -26,9 +26,11 @@ import {
 } from '@mui/icons-material';
 import axios from '../utils/axios';
 import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthContext';
 
 const Products = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -50,7 +52,15 @@ const Products = () => {
   const [password, setPassword] = useState('');
   const [actionType, setActionType] = useState(null);
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/login');
+    }
+  }, [authLoading, user, navigate]);
+
   const fetchProducts = useCallback(async () => {
+    if (!user) return;
+    
     try {
       const response = await axios.get('/api/products');
       setProducts(response.data);
@@ -65,11 +75,13 @@ const Products = () => {
         setLoading(false);
       }
     }
-  }, [navigate]);
+  }, [navigate, user]);
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    if (user) {
+      fetchProducts();
+    }
+  }, [fetchProducts, user]);
 
   const handleOpen = () => {
     setOpen(true);
